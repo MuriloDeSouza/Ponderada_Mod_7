@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oráculo de Criptoativos</title>
+</head>
+<body>
+    <h1>Previsão de Criptoativos</h1>
+    <form action="/predict" method="post">
+        <label for="crypto">Escolha o Criptoativo:</label>
+        <select name="crypto" id="crypto">
+            {% for crypto in cryptos %}
+            <option value="{{ crypto }}">{{ crypto }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Oráculo</button>
+    </form>
+
+    {% if image %}
+    <h2>Previsão para os próximos dias:</h2>
+    <img src="{{ image }}" alt="Previsão de Preço">
+    {% endif %}
+</body>
+</html>

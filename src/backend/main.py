@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
-from src.backend.model import predict_crypto
+from model import predict_crypto
 
 app = FastAPI()
 templates = Jinja2Templates(directory="src/frontend/templates")
