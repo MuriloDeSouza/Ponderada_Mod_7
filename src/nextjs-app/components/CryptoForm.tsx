@@ -16,20 +16,29 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction }) => {
       const { imageUrl, predictions } = response.data;
       onPrediction(imageUrl, predictions);
     } catch (error) {
-      console.error('Error fetching predictions:', error);
+      console.error('Erro ao buscar previsões:', error);
     }
     setLoading(false);
   };
 
   return (
-    <div>
-      <h2>Selecione o Criptoativo</h2>
-      <select value={crypto} onChange={(e) => setCrypto(e.target.value)}>
+    <div className="p-6 bg-white rounded-lg shadow-md text-black">
+      <h2 className="text-xl font-bold mb-4">Selecione o Criptoativo</h2>
+      <select 
+        value={crypto} 
+        onChange={(e) => setCrypto(e.target.value)}
+        className="p-2 border rounded-md mb-4"
+      >
         <option value="BTC-USD">Bitcoin (BTC-USD)</option>
         <option value="ETH-USD">Ethereum (ETH-USD)</option>
         <option value="BNB-USD">Binance Coin (BNB-USD)</option>
+        <option value="ADA-USD">Cardano (ADA-USD)</option>
       </select>
-      <button onClick={handlePredict} disabled={loading}>
+      <button 
+        onClick={handlePredict} 
+        disabled={loading}
+        className={`p-2 bg-blue-500 text-white rounded-md ${loading && 'bg-gray-400 cursor-not-allowed'}`}
+      >
         {loading ? 'Carregando...' : 'Prever'}
       </button>
     </div>
