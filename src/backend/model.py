@@ -47,19 +47,19 @@ def train_and_save_model(crypto='BTC-USD'):
     model.fit(X_train, y_train, batch_size=64, epochs=10)
 
     # Salvando o modelo e o scaler
-    model_save_path = f'src/backend/saved_models/model_{crypto}.h5'
+    model_save_path = f'saved_models/model_{crypto}.h5'
     model.save(model_save_path)
 
     # Salvando o scaler
-    scaler_save_path = f'src/backend/saved_models/scaler_{crypto}.npy'
+    scaler_save_path = f'saved_models/scaler_{crypto}.npy'
     np.save(scaler_save_path, scaler)
 
     return model, scaler
 
 def predict_crypto(crypto='BTC-USD'):
     # Carregar o modelo
-    model_path = f'src/backend/saved_models/model_{crypto}.h5'
-    scaler_path = f'src/backend/saved_models/scaler_{crypto}.npy'
+    model_path = f'saved_models/model_{crypto}.h5'
+    scaler_path = f'saved_models/scaler_{crypto}.npy'
     model = load_model(model_path)
     scaler = np.load(scaler_path, allow_pickle=True).item()
 

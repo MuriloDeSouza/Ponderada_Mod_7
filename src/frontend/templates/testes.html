@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oráculo de Criptoativos</title>
+</head>
+<body>
+    <h1>Previsão de Criptoativos</h1>
+    <form action="/testes" method="post">
+        <label for="crypto">Escolha o Criptoativo que voce quer treinar:</label>
+        <select name="crypto" id="crypto">
+            {% for crypto in cryptos %}
+            <option value="{{ crypto }}">{{ crypto }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Oráculo</button>
+    </form>
+</body>
+</html>
