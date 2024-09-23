@@ -1,52 +1,3 @@
-// import React, { useState } from 'react';
-// import axios from 'axios';
-
-// interface CryptoFormProps {
-//   onPrediction: (imageUrl: string, predictions: string[]) => void;
-// }
-
-// const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction }) => {
-//   const [crypto, setCrypto] = useState('BTC-USD');
-//   const [loading, setLoading] = useState(false);
-
-//   const handlePredict = async () => {
-//     setLoading(true);
-//     try {
-//       const response = await axios.post('http://localhost:8000/predict', { crypto });
-//       const { imageUrl, predictions } = response.data;
-//       onPrediction(imageUrl, predictions);
-//     } catch (error) {
-//       console.error('Erro ao buscar previsões:', error);
-//     }
-//     setLoading(false);
-//   };
-
-//   return (
-//     <div className="p-6 bg-white rounded-lg shadow-md text-black">
-//       <h2 className="text-xl font-bold mb-4">Selecione o Criptoativo que voce deseja prever</h2>
-//       <select 
-//         value={crypto} 
-//         onChange={(e) => setCrypto(e.target.value)}
-//         className="p-2 border rounded-md mb-4"
-//       >
-//         <option value="BTC-USD">Bitcoin (BTC-USD)</option>
-//         <option value="ETH-USD">Ethereum (ETH-USD)</option>
-//         <option value="BNB-USD">Binance Coin (BNB-USD)</option>
-//         <option value="ADA-USD">Cardano (ADA-USD)</option>
-//       </select>
-//       <button 
-//         onClick={handlePredict} 
-//         disabled={loading}
-//         className={`p-2 bg-blue-500 text-white rounded-md ${loading && 'bg-gray-400 cursor-not-allowed'}`}
-//       >
-//         {loading ? 'Carregando...' : 'Prever'}
-//       </button>
-//     </div>
-//   );
-// };
-
-// export default CryptoForm;
-
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -58,13 +9,16 @@ interface CryptoFormProps {
 const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProphet }) => {
   const [crypto, setCrypto] = useState('BTC-USD');
   const [loading, setLoading] = useState(false);
+  const [showPdfButton, setShowPdfButton] = useState(false);
 
   const handlePredictLSTM = async () => {
     setLoading(true);
+    setShowPdfButton(false); // Reseta botão de PDF ao carregar
     try {
       const response = await axios.post('http://localhost:8000/predict', { crypto });
       const { imageUrl, predictions } = response.data;
       onPrediction(imageUrl, predictions);
+      setShowPdfButton(true);
     } catch (error) {
       console.error('Erro ao buscar previsões:', error);
     }
@@ -73,14 +27,34 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
 
   const handlePredictProphet = async () => {
     setLoading(true);
+    setShowPdfButton(false); // Reseta botão de PDF ao carregar
     try {
       const response = await axios.post('http://localhost:8000/predict_prophet', { crypto });
       const { imageUrl, predictions } = response.data;
       onPredictionProphet(imageUrl, predictions);
+      setShowPdfButton(true);
     } catch (error) {
       console.error('Erro ao buscar previsões Prophet:', error);
     }
     setLoading(false);
+  };
+  
+  // Parte de gerar PDF
+  const handleGeneratePdf = async () => {
+    try {
+      const response = await axios.post('http://localhost:8000/generate-pdf', { crypto }, { responseType: 'blob' });
+      
+      if (response.data) {
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'report.pdf');
+        document.body.appendChild(link);
+        link.click();
+      }
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+    }
   };
 
   return (
@@ -99,20 +73,29 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       <button 
         onClick={handlePredictLSTM} 
         disabled={loading}
-        className={`p-2 bg-blue-500 text-white rounded-md ${loading && 'bg-gray-400 cursor-not-allowed'}`}
+        className={`p-2 bg-blue-500 text-white rounded-md ${loading ? 'opacity-50' : ''}`}
       >
         {loading ? 'Carregando...' : 'Prever com LSTM'}
       </button>
-
       <button 
         onClick={handlePredictProphet} 
         disabled={loading}
-        className={`p-2 bg-green-500 text-white rounded-md ml-4 ${loading && 'bg-gray-400 cursor-not-allowed'}`}
+        className={`p-2 bg-green-500 text-white rounded-md ml-2 ${loading ? 'opacity-50' : ''}`}
       >
         {loading ? 'Carregando...' : 'Prever com Prophet'}
       </button>
+  
+      {showPdfButton && (
+        <button 
+          onClick={handleGeneratePdf} 
+          className="p-2 bg-red-500 text-white rounded-md mt-4"
+        >
+          Gerar PDF
+        </button>
+      )}
     </div>
   );
+  
 };
 
 export default CryptoForm;

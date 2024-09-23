@@ -1,29 +1,3 @@
-// "use client";
-// import React, { useState } from 'react';
-// import CryptoForm from '../components/CryptoForm';
-// import PredictionResult from '../components/PredictionResult';
-
-// const Home = () => {
-//   const [imageUrl, setImageUrl] = useState<string | null>(null);
-//   const [predictions, setPredictions] = useState<string[]>([]);
-
-//   const handlePrediction = (imageUrl: string, predictions: string[]) => {
-//     setImageUrl(imageUrl);
-//     setPredictions(predictions);
-//   };
-
-//   return (
-//     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-//       <CryptoForm onPrediction={handlePrediction} />
-//       {imageUrl && predictions.length > 0 && (
-//         <PredictionResult imageUrl={imageUrl} predictions={predictions} />
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
 "use client";
 import React, { useState } from 'react';
 import CryptoForm from '../components/CryptoForm';
