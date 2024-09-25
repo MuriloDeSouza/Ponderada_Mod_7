@@ -35,6 +35,7 @@ def create_pdf(filename: str, crypto: str):
     # Supondo que os gráficos já estejam salvos como arquivos de imagem:
     image_lstm = f'../nextjs-app/public/lstm_prediction_plot.png'
     image_prophet = f'../nextjs-app/public/prophet_prediction_plot.png'
+    image_lstm_ph = f'../nextjs-app/public/lstm_Ph_prediction_plot.png'
     
     # Adicionar primeira imagem (LSTM)
     if os.path.exists(image_lstm):
@@ -42,9 +43,13 @@ def create_pdf(filename: str, crypto: str):
         pdf.image(image_lstm, x=10, y=10, w=180)
 
     # Adicionar segunda imagem (Prophet)
-    if os.path.exists(image_prophet):
+    elif os.path.exists(image_prophet):
         pdf.add_page()
         pdf.image(image_prophet, x=10, y=10, w=180)
+    
+    elif os.path.exists(image_lstm_ph):
+        pdf.add_page()
+        pdf.image(image_lstm_ph, x=10, y=10, w=180)
 
     # Salvar o PDF no servidor
     pdf.output(filename)
@@ -194,15 +199,3 @@ async def post_predict_prophet(request: CryptoRequest):
     predictions_ph = [f"Dia {i+1}: Previsão de fechamento: R$ {float(price*5.53):.2f}" for i, price in enumerate(future_predictions_ph)]
 
     return {"imageUrl": "/prophet_prediction_plot.png", "predictions": predictions_ph}  # Certifique-se que o nome corresponde ao esperado no frontend
-
-
-# @app.post("/generate-pdf")
-# async def generate_pdf(request: CryptoRequest, background_tasks: BackgroundTasks):
-#     crypto = request.crypto
-#     pdf_filename = f"{crypto}_report.pdf"
-#     pdf_path = os.path.join("/tmp", pdf_filename)
-
-#     # Gera o PDF em background
-#     background_tasks.add_task(create_pdf, pdf_path)
-
-#     return {"message": "O PDF está sendo gerado e será disponibilizado em breve.", "pdf_path": pdf_path}
