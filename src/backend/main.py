@@ -11,36 +11,8 @@ import time
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 
 # Função para gerar o PDF
-def create_pdf(crypto: str, predictions_lstm: list, predictions_prophet: list, filename: str):
+def create_pdf(filename: str):
     pdf = FPDF()
-    pdf.add_page()
-
-    # Título
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(40, 10, f'Relatório de Previsão de Preço - {crypto}', ln=True)
-
-    # Adicionar uma linha de espaço
-    pdf.ln(10)
-
-    # Adicionar previsões do modelo LSTM
-    pdf.set_font('Arial', '', 12)
-    pdf.cell(0, 10, 'Previsões LSTM:', ln=True)
-    for i, pred in enumerate(predictions_lstm, 1):
-        pdf.cell(0, 10, f'Dia {i}: {pred}', ln=True)
-
-    pdf.ln(10)  # Adiciona um espaçamento entre as previsões
-
-    # Adicionar previsões do modelo Prophet
-    pdf.set_font('Arial', '', 12)
-    pdf.cell(0, 10, 'Previsões Prophet:', ln=True)
-    for i, pred in enumerate(predictions_prophet, 1):
-        pdf.cell(0, 10, f'Dia {i}: {pred}', ln=True)
-
-    pdf.ln(10)  # Espaçamento para os gráficos
-
-    # Adicionar gráficos
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, 'Gráficos de Previsão:', ln=True)
 
     # Supondo que os gráficos já estejam salvos como arquivos de imagem:
     image_lstm = f'../nextjs-app/public/lstm_prediction_plot.png'
@@ -92,8 +64,7 @@ class CryptoRequest(BaseModel):
 #     # Retorna o PDF gerado
 #     return FileResponse(pdf_path, media_type='application/pdf', filename=pdf_filename)
 
-# Rota POST para previsões
-@app.post("/predict")
+@app.post("/comparation")
 async def post_predict(request: CryptoRequest):
     crypto = request.crypto
     future_predictions, real_last_5_days = predict_crypto(crypto)
@@ -114,21 +85,18 @@ async def post_predict(request: CryptoRequest):
 
     # Plota o gráfico e salva na pasta estática do Next.js
     plt.figure(figsize=(10, 5))
-    days_real_ph = np.arange(-5, 0)  # Últimos 5 dias
     days_future_ph = np.arange(1, 8)  # Próximos 7 dias
 
     plt.plot(days_real, real_last_5_days, label='Últimos 5 dias', marker='o')
-    plt.plot(days_future, future_predictions, label='Próximos 7 dias', marker='o')
-
-    plt.plot(days_real_ph, real_last_5_days_ph, label='Últimos 5 dias', marker='o')
-    plt.plot(days_future_ph, future_predictions_ph, label='Próximos 7 dias', marker='o')
+    plt.plot(days_future, future_predictions, label='Próximos 7 dias (LSTM)', marker='o')
+    plt.plot(days_future_ph, future_predictions_ph, label='Próximos 7 dias (Prophet)', marker='o')
 
     # Destacar o melhor dia para comprar e vender
-    plt.scatter(best_day_buy, future_predictions[best_day_buy - 1], color='green', label='Melhor Dia para Comprar', marker='^', s=100)
-    plt.scatter(best_day_sell, future_predictions[best_day_sell - 1], color='red', label='Melhor Dia para Vender', marker='v', s=100)
+    plt.scatter(best_day_buy, future_predictions[best_day_buy - 1], color='green', label='Melhor Dia para Comprar (LSTM)', marker='^', s=100)
+    plt.scatter(best_day_sell, future_predictions[best_day_sell - 1], color='red', label='Melhor Dia para Vender (LSTM)', marker='v', s=100)
 
-    plt.scatter(best_day_buy_ph, future_predictions_ph[best_day_buy_ph - 1], color='green', label='Melhor Dia para Comprar', marker='^', s=100)
-    plt.scatter(best_day_sell_ph, future_predictions_ph[best_day_sell_ph - 1], color='red', label='Melhor Dia para Vender', marker='v', s=100)
+    plt.scatter(best_day_buy_ph, future_predictions_ph[best_day_buy_ph - 1], color='green', label='Melhor Dia para Comprar (Prophet)', marker='^', s=100)
+    plt.scatter(best_day_sell_ph, future_predictions_ph[best_day_sell_ph - 1], color='red', label='Melhor Dia para Vender (Prophet)', marker='v', s=100)
 
     # Configuração do gráfico
     plt.title(f'Previsão de Preços para {crypto}')
@@ -136,14 +104,8 @@ async def post_predict(request: CryptoRequest):
 
     # Ajustar o caminho para salvar a imagem na pasta 'public' do Next.js
     current_dir = os.path.dirname(__file__)
-    image_path_lstm = os.path.join(current_dir, '../nextjs-app/public/lstm_prediction_plot.png')
+    image_path_lstm = os.path.join(current_dir, '../nextjs-app/public/lstm_Ph_prediction_plot.png')
     plt.savefig(image_path_lstm)
-    plt.close()
-
-    # Ajustar o caminho para salvar a imagem na pasta 'public' do Next.js
-    current_dir_ph = os.path.dirname(__file__)
-    image_path_ph = os.path.join(current_dir_ph, '../nextjs-app/public/prophet_prediction_plot.png')
-    plt.savefig(image_path_ph)
     plt.close()
 
     # Formatar as previsões para exibir no frontend
@@ -152,9 +114,47 @@ async def post_predict(request: CryptoRequest):
     # Formatar as previsões para exibir no frontend
     predictions_ph = [f"Dia {i+1}: Previsão de fechamento: {float(price):.2f}" for i, price in enumerate(future_predictions_ph)]
 
-    return {"imageUrl": "/lstm_prediction_plot.png", "predictions": predictions}
+    return {"imageUrl": "/lstm_Ph_prediction_plot.png", "predictions": predictions, "predictions_ph": predictions_ph}
 
 # Rota POST para previsões
+@app.post("/predict")
+async def post_predict(request: CryptoRequest):
+    crypto = request.crypto
+    future_predictions, real_last_5_days = predict_crypto(crypto)
+    
+    # Encontrando o melhor dia para comprar e vender
+    best_day_buy = np.argmin(future_predictions) + 1  # Melhor dia para comprar (menor valor)
+    best_day_sell = np.argmax(future_predictions) + 1  # Melhor dia para vender (maior valor)
+
+    # Plota o gráfico e salva na pasta estática do Next.js
+    plt.figure(figsize=(10, 5))
+    days_real = np.arange(-5, 0)  # Últimos 5 dias
+    days_future = np.arange(1, 8)  # Próximos 7 dias
+
+    plt.plot(days_real, real_last_5_days, label='Últimos 5 dias', marker='o')
+    plt.plot(days_future, future_predictions, label='Próximos 7 dias', marker='o')
+
+    # Destacar o melhor dia para comprar e vender
+    plt.scatter(best_day_buy, future_predictions[best_day_buy - 1], color='green', label='Melhor Dia para Comprar', marker='^', s=100)
+    plt.scatter(best_day_sell, future_predictions[best_day_sell - 1], color='red', label='Melhor Dia para Vender', marker='v', s=100)
+
+    # Configuração do gráfico
+    plt.title(f'Previsão de Preços para {crypto} em dólares (USD)')
+    plt.legend()
+
+    # Ajustar o caminho para salvar a imagem na pasta 'public' do Next.js
+    current_dir = os.path.dirname(__file__)
+    image_path_lstm = os.path.join(current_dir, '../nextjs-app/public/lstm_prediction_plot.png')
+    plt.savefig(image_path_lstm)
+    plt.close()
+
+    # Formatar as previsões para exibir no frontend
+    predictions = [f"Dia {i+1}: Previsão de fechamento: R$ {float(price*5.53):.2f}" for i, price in enumerate(future_predictions)]
+
+    return {"imageUrl": "/lstm_prediction_plot.png", "predictions": predictions}
+
+# Rota POST para previsões Prophet
+# Rota POST para previsões Prophet
 @app.post("/predict_prophet")
 async def post_predict_prophet(request: CryptoRequest):
     crypto = request.crypto
@@ -186,9 +186,10 @@ async def post_predict_prophet(request: CryptoRequest):
     plt.close()
 
     # Formatar as previsões para exibir no frontend
-    predictions_ph = [f"Dia {i+1}: Previsão de fechamento: {float(price*5.53):.2f}" for i, price in enumerate(future_predictions_ph)]
+    predictions_ph = [f"Dia {i+1}: Previsão de fechamento: R$ {float(price*5.53):.2f}" for i, price in enumerate(future_predictions_ph)]
 
-    return {"imageUrl": "/prophet_prediction_plot.png", "predictions": predictions_ph}
+    return {"imageUrl": "/prophet_prediction_plot.png", "predictions": predictions_ph}  # Certifique-se que o nome corresponde ao esperado no frontend
+
 
 @app.post("/generate-pdf")
 async def generate_pdf(request: CryptoRequest, background_tasks: BackgroundTasks):

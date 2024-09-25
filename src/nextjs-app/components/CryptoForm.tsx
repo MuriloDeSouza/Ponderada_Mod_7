@@ -4,12 +4,15 @@ import axios from 'axios';
 interface CryptoFormProps {
   onPrediction: (imageUrl: string, predictions: string[]) => void;
   onPredictionProphet: (imageUrl: string, predictions: string[]) => void; // Adicionando a função onPredictionProphet
+  onGeneratePdf: (filename: string) => void; // Adicionando a função onGeneratePdf
+  onPredictionLSTMandPh: (imageUrl: string, predictions: string[]) => void; // Adicionando a função onPredictionLSTMandPh
 }
 
-const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProphet }) => {
+const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProphet, onGeneratePdf, onPredictionLSTMandPh }) => {
   const [crypto, setCrypto] = useState('BTC-USD');
   const [loading, setLoading] = useState(false);
   const [showPdfButton, setShowPdfButton] = useState(false);
+  const [LstmAndProphet, setLstmAndProphet] = useState(false);
 
   const handlePredictLSTM = async () => {
     setLoading(true);
@@ -35,6 +38,22 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       setShowPdfButton(true);
     } catch (error) {
       console.error('Erro ao buscar previsões Prophet:', error);
+    }
+    setLoading(false);
+  };
+
+  const handlePredictLSTMandPh = async () => {
+    setLoading(true);
+    setLstmAndProphet(false);
+    setShowPdfButton(false); // Reseta botão de PDF ao carregar
+    try {
+      const response = await axios.post('http://localhost:8000/comparation', { crypto });
+      const { imageUrl, predictions } = response.data;
+      onPrediction(imageUrl, predictions);
+      setLstmAndProphet(true);
+      setShowPdfButton(true);
+    } catch (error) {
+      console.error('Erro ao buscar previsões:', error);
     }
     setLoading(false);
   };
@@ -84,17 +103,28 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       >
         {loading ? 'Carregando...' : 'Prever com Prophet'}
       </button>
-  
-      {showPdfButton && (
-        <button 
-          onClick={handleGeneratePdf} 
-          className="p-2 bg-red-500 text-white rounded-md mt-4"
-        >
-          Gerar PDF
-        </button>
-      )}
+      <button 
+        onClick={handlePredictLSTMandPh} 
+        disabled={loading}
+        className={`p-2 bg-yellow-500 text-white rounded-md ml-2 ${LstmAndProphet ? 'opacity-50' : ''}`}
+      >
+        {LstmAndProphet ? 'Carregando...' : 'Prever com LSTM e Prophet'}
+      </button>
+    <div>
+      <center>
+        {showPdfButton && (
+          <button 
+            onClick={handleGeneratePdf} 
+            className="p-2 bg-red-500 text-white rounded-md mt-4"
+          >
+            Gerar PDF
+          </button>
+        )}
+      </center>
+    </div>
     </div>
   );
+
   
 };
 
