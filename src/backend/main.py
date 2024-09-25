@@ -9,24 +9,8 @@ import os
 from fpdf import FPDF
 import time
 from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
 
-# Função para gerar o PDF
-def create_pdf(filename: str):
-    pdf = FPDF()
-
-    # Supondo que os gráficos já estejam salvos como arquivos de imagem:
-    image_lstm = f'../nextjs-app/public/lstm_prediction_plot.png'
-    image_prophet = f'../nextjs-app/public/prophet_prediction_plot.png'
-    
-    # Verificar se os gráficos existem e adicionar ao PDF
-    if os.path.exists(image_lstm):
-        pdf.image(image_lstm, x=10, y=None, w=100)
-
-    if os.path.exists(image_prophet):
-        pdf.image(image_prophet, x=10, y=None, w=100)
-
-    # Salva o PDF
-    pdf.output(filename)
 
 # Inicializar o FastAPI
 app = FastAPI()
@@ -43,26 +27,51 @@ app.add_middleware(
 # Definir o formato da entrada de dados usando Pydantic
 class CryptoRequest(BaseModel):
     crypto: str
+
+# Função para gerar o PDF
+def create_pdf(filename: str, crypto: str):
+    pdf = FPDF()
+
+    # Supondo que os gráficos já estejam salvos como arquivos de imagem:
+    image_lstm = f'../nextjs-app/public/lstm_prediction_plot.png'
+    image_prophet = f'../nextjs-app/public/prophet_prediction_plot.png'
     
-# @app.post("/generate-pdf")
-# async def generate_pdf(request: CryptoRequest, background_tasks: BackgroundTasks):
-#     crypto = request.crypto
-#     pdf_filename = f"{crypto}_report.pdf"
-#     pdf_path = os.path.join("/tmp", pdf_filename)
+    # Adicionar primeira imagem (LSTM)
+    if os.path.exists(image_lstm):
+        pdf.add_page()
+        pdf.image(image_lstm, x=10, y=10, w=180)
 
-#     # Pegando as previsões para incluir no PDF
-#     future_predictions, _ = predict_crypto(crypto)
-#     future_predictions_ph, _ = predict_with_prophet(crypto)
+    # Adicionar segunda imagem (Prophet)
+    if os.path.exists(image_prophet):
+        pdf.add_page()
+        pdf.image(image_prophet, x=10, y=10, w=180)
 
-#     # Gera o PDF em background com previsões
-#     background_tasks.add_task(create_pdf, crypto, future_predictions, future_predictions_ph, pdf_path)
+    # Salvar o PDF no servidor
+    pdf.output(filename)
 
-#     # Verifica se o arquivo foi realmente criado
-#     if not os.path.exists(pdf_path):
-#         raise HTTPException(status_code=500, detail="Falha ao gerar o PDF")
+# Rota para gerar e servir o PDF
+@app.post("/generate-pdf")
+async def generate_pdf(request: CryptoRequest, background_tasks: BackgroundTasks):
+    crypto = request.crypto
+    pdf_filename = f"{crypto}_report.pdf"
+    pdf_path = os.path.join(os.getcwd(), pdf_filename)
 
-#     # Retorna o PDF gerado
-#     return FileResponse(pdf_path, media_type='application/pdf', filename=pdf_filename)
+    # Gera o PDF em background
+    background_tasks.add_task(create_pdf, pdf_path, crypto)
+
+    # Retorna o caminho do PDF para o frontend
+    pdf_url = f"/download-pdf/{pdf_filename}"
+    return {"pdf_url": pdf_url}
+
+
+# Rota para servir o PDF gerado de forma dinâmica
+@app.get("/download-pdf/{filename}")
+async def download_pdf(filename: str):
+    file_path = os.path.join(os.getcwd(), filename)
+    if os.path.exists(file_path):
+        return FileResponse(path=file_path, filename=filename, media_type='application/pdf')
+    return {"error": "Arquivo não encontrado"}
+
 
 @app.post("/comparation")
 async def post_predict(request: CryptoRequest):
@@ -99,7 +108,7 @@ async def post_predict(request: CryptoRequest):
     plt.scatter(best_day_sell_ph, future_predictions_ph[best_day_sell_ph - 1], color='red', label='Melhor Dia para Vender (Prophet)', marker='v', s=100)
 
     # Configuração do gráfico
-    plt.title(f'Previsão de Preços para {crypto}')
+    plt.title(f'Previsão de Preços para {crypto} em dólares (USD)')
     plt.legend()
 
     # Ajustar o caminho para salvar a imagem na pasta 'public' do Next.js
@@ -109,12 +118,9 @@ async def post_predict(request: CryptoRequest):
     plt.close()
 
     # Formatar as previsões para exibir no frontend
-    predictions = [f"Dia {i+1}: Previsão de fechamento: {float(price*5.53):.2f}" for i, price in enumerate(future_predictions)]
+    predictions = [f"Dia {i+1}: Previsão de fechamento: R$ {float(price*5.53):.2f}" for i, price in enumerate(future_predictions)]
 
-    # Formatar as previsões para exibir no frontend
-    predictions_ph = [f"Dia {i+1}: Previsão de fechamento: {float(price):.2f}" for i, price in enumerate(future_predictions_ph)]
-
-    return {"imageUrl": "/lstm_Ph_prediction_plot.png", "predictions": predictions, "predictions_ph": predictions_ph}
+    return {"imageUrl": "/lstm_Ph_prediction_plot.png", "predictions": predictions}
 
 # Rota POST para previsões
 @app.post("/predict")
@@ -132,11 +138,11 @@ async def post_predict(request: CryptoRequest):
     days_future = np.arange(1, 8)  # Próximos 7 dias
 
     plt.plot(days_real, real_last_5_days, label='Últimos 5 dias', marker='o')
-    plt.plot(days_future, future_predictions, label='Próximos 7 dias', marker='o')
+    plt.plot(days_future, future_predictions, label='Próximos 7 dias (LSTM)', marker='o')
 
     # Destacar o melhor dia para comprar e vender
-    plt.scatter(best_day_buy, future_predictions[best_day_buy - 1], color='green', label='Melhor Dia para Comprar', marker='^', s=100)
-    plt.scatter(best_day_sell, future_predictions[best_day_sell - 1], color='red', label='Melhor Dia para Vender', marker='v', s=100)
+    plt.scatter(best_day_buy, future_predictions[best_day_buy - 1], color='green', label='Melhor Dia para Comprar (LSTM)', marker='^', s=100)
+    plt.scatter(best_day_sell, future_predictions[best_day_sell - 1], color='red', label='Melhor Dia para Vender (LSTM)', marker='v', s=100)
 
     # Configuração do gráfico
     plt.title(f'Previsão de Preços para {crypto} em dólares (USD)')
@@ -154,7 +160,6 @@ async def post_predict(request: CryptoRequest):
     return {"imageUrl": "/lstm_prediction_plot.png", "predictions": predictions}
 
 # Rota POST para previsões Prophet
-# Rota POST para previsões Prophet
 @app.post("/predict_prophet")
 async def post_predict_prophet(request: CryptoRequest):
     crypto = request.crypto
@@ -170,13 +175,13 @@ async def post_predict_prophet(request: CryptoRequest):
     days_future_ph = np.arange(1, 8)  # Próximos 7 dias
 
     plt.plot(days_real_ph, real_last_5_days_ph, label='Últimos 5 dias', marker='o')
-    plt.plot(days_future_ph, future_predictions_ph, label='Próximos 7 dias', marker='o')
+    plt.plot(days_future_ph, future_predictions_ph, label='Próximos 7 dias (Prophet)', marker='o')
 
-    plt.scatter(best_day_buy_ph, future_predictions_ph[best_day_buy_ph - 1], color='green', label='Melhor Dia para Comprar', marker='^', s=100)
-    plt.scatter(best_day_sell_ph, future_predictions_ph[best_day_sell_ph - 1], color='red', label='Melhor Dia para Vender', marker='v', s=100)
+    plt.scatter(best_day_buy_ph, future_predictions_ph[best_day_buy_ph - 1], color='green', label='Melhor Dia para Comprar (Prophet)', marker='^', s=100)
+    plt.scatter(best_day_sell_ph, future_predictions_ph[best_day_sell_ph - 1], color='red', label='Melhor Dia para Vender (Prophet)', marker='v', s=100)
 
     # Configuração do gráfico
-    plt.title(f'Previsão de Preços para {crypto}')
+    plt.title(f'Previsão de Preços para {crypto} em dólares (USD)')
     plt.legend()
 
     # Ajustar o caminho para salvar a imagem na pasta 'public' do Next.js
@@ -191,13 +196,13 @@ async def post_predict_prophet(request: CryptoRequest):
     return {"imageUrl": "/prophet_prediction_plot.png", "predictions": predictions_ph}  # Certifique-se que o nome corresponde ao esperado no frontend
 
 
-@app.post("/generate-pdf")
-async def generate_pdf(request: CryptoRequest, background_tasks: BackgroundTasks):
-    crypto = request.crypto
-    pdf_filename = f"{crypto}_report.pdf"
-    pdf_path = os.path.join("/tmp", pdf_filename)
+# @app.post("/generate-pdf")
+# async def generate_pdf(request: CryptoRequest, background_tasks: BackgroundTasks):
+#     crypto = request.crypto
+#     pdf_filename = f"{crypto}_report.pdf"
+#     pdf_path = os.path.join("/tmp", pdf_filename)
 
-    # Gera o PDF em background
-    background_tasks.add_task(create_pdf, crypto, pdf_path)
+#     # Gera o PDF em background
+#     background_tasks.add_task(create_pdf, pdf_path)
 
-    return {"message": "O PDF está sendo gerado e será disponibilizado em breve."}
+#     return {"message": "O PDF está sendo gerado e será disponibilizado em breve.", "pdf_path": pdf_path}

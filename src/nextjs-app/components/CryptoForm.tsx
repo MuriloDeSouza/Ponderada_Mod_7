@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import jsPDF from 'jspdf';
+
 
 interface CryptoFormProps {
   onPrediction: (imageUrl: string, predictions: string[]) => void;
@@ -57,24 +59,20 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
     }
     setLoading(false);
   };
-  
-  // Parte de gerar PDF
+
   const handleGeneratePdf = async () => {
     try {
-      const response = await axios.post('http://localhost:8000/generate-pdf', { crypto }, { responseType: 'blob' });
-      
-      if (response.data) {
-        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'report.pdf');
-        document.body.appendChild(link);
-        link.click();
+      const response = await axios.post('http://localhost:8000/generate-pdf', { crypto });
+  
+      if (response.data.pdf_url) {
+        const pdfUrl = response.data.pdf_url;
+        window.open(`http://localhost:8000${pdfUrl}`, '_blank');  // Abre o PDF em uma nova aba
       }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
     }
   };
+  
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md text-black">
@@ -106,7 +104,7 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       <button 
         onClick={handlePredictLSTMandPh} 
         disabled={loading}
-        className={`p-2 bg-yellow-500 text-white rounded-md ml-2 ${LstmAndProphet ? 'opacity-50' : ''}`}
+        className={`p-2 bg-yellow-500 text-white rounded-md ml-2 ${loading ? 'opacity-50' : ''}`}
       >
         {LstmAndProphet ? 'Carregando...' : 'Prever com LSTM e Prophet'}
       </button>
