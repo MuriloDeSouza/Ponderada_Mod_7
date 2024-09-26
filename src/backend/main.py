@@ -10,6 +10,8 @@ from fpdf import FPDF
 import time
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
+from datetime import datetime
 
 
 # Inicializar o FastAPI
@@ -27,6 +29,28 @@ app.add_middleware(
 # Definir o formato da entrada de dados usando Pydantic
 class CryptoRequest(BaseModel):
     crypto: str
+
+# Estrutura para armazenar os logs de previsões (em memória para simplificar)
+logs = []
+
+# Classe para representar uma requisição de log
+class LogEntry(BaseModel):
+    crypto: str
+    model: str
+    timestamp: datetime
+
+# Endpoint para salvar um novo log
+@app.post("/api/logs")
+async def save_log(logs: LogEntry):
+    logs.append(logs.dict())  # Salva o log no "banco de dados" (neste caso, na memória)
+    print("bati aqui na rota de post")
+    return {"message": "Log salvo com sucesso"}
+
+# Endpoint para buscar o histórico de logs
+@app.get("/api/logs")
+async def get_logs():
+    print("bati aqui na rota de get")
+    return logs
 
 # Função para gerar o PDF
 def create_pdf(filename: str, crypto: str):

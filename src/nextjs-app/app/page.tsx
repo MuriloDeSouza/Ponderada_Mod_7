@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import CryptoForm from '../components/CryptoForm';
 import PredictionResult from '../components/PredictionResult';
+import Link from 'next/link';
 
 const Home = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);

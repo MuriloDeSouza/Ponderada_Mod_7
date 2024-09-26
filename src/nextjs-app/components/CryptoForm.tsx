@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
+import Link from 'next/link';  // Importa o componente Link
+
 
 
 interface CryptoFormProps {
@@ -24,8 +26,15 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       const { imageUrl, predictions } = response.data;
       onPrediction(imageUrl, predictions);
       setShowPdfButton(true);
+      // batendo no endpoint para salvar o log
+      await axios.post('/api/logs', {
+        crypto: 'BTC-USD',  // Exemplo, pode ser dinâmico
+        model: 'LSTM',
+        timestamp: new Date().toISOString()
+      });
+      console.log('Log salvo com sucesso');
     } catch (error) {
-      console.error('Erro ao buscar previsões:', error);
+      console.error('Erro ao salvar log:', error);
     }
     setLoading(false);
   };
@@ -38,8 +47,14 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       const { imageUrl, predictions } = response.data;
       onPredictionProphet(imageUrl, predictions);
       setShowPdfButton(true);
+      await axios.post('/api/logs', {
+        crypto: 'BTC-USD',  // Exemplo, pode ser dinâmico
+        model: 'Prophet',
+        timestamp: new Date().toISOString()
+      });
+      console.log('Log salvo com sucesso');
     } catch (error) {
-      console.error('Erro ao buscar previsões Prophet:', error);
+      console.error('Erro ao salvar log:', error);
     }
     setLoading(false);
   };
@@ -54,8 +69,14 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       onPrediction(imageUrl, predictions);
       setLstmAndProphet(true);
       setShowPdfButton(true);
+      await axios.post('/api/logs', {
+        crypto: 'BTC-USD',  // Exemplo, pode ser dinâmico
+        model: 'LSTMandProphet',
+        timestamp: new Date().toISOString()
+      });
+      console.log('Log salvo com sucesso');
     } catch (error) {
-      console.error('Erro ao buscar previsões:', error);
+      console.error('Erro ao salvar log:', error);
     }
     setLoading(false);
   };
@@ -85,7 +106,6 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
         <option value="BTC-USD">Bitcoin (BTC-USD)</option>
         <option value="ETH-USD">Ethereum (ETH-USD)</option>
         <option value="BNB-USD">Binance Coin (BNB-USD)</option>
-        <option value="ADA-USD">Cardano (ADA-USD)</option>
       </select>
       <button 
         onClick={handlePredictLSTM} 
@@ -108,6 +128,12 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       >
         {LstmAndProphet ? 'Carregando...' : 'Prever com LSTM e Prophet'}
       </button>
+      {/* Botão para navegar até a página de logs */}
+    <div className="mt-4">
+      <Link href="../app/logs.tsx">
+         <button className="p-2 bg-gray-500 text-white rounded-md">Ver Histórico de Previsões</button>
+      </Link>
+    </div>
     <div>
       <center>
         {showPdfButton && (
