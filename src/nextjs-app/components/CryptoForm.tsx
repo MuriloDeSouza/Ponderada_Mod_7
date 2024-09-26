@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import jsPDF from 'jspdf';
 import Link from 'next/link';  // Importa o componente Link
 
 
@@ -8,11 +7,11 @@ import Link from 'next/link';  // Importa o componente Link
 interface CryptoFormProps {
   onPrediction: (imageUrl: string, predictions: string[]) => void;
   onPredictionProphet: (imageUrl: string, predictions: string[]) => void; // Adicionando a função onPredictionProphet
-  onGeneratePdf: (filename: string) => void; // Adicionando a função onGeneratePdf
-  onPredictionLSTMandPh: (imageUrl: string, predictions: string[]) => void; // Adicionando a função onPredictionLSTMandPh
+  // onGeneratePdf: (filename: string) => void; // Adicionando a função onGeneratePdf
+  // onPredictionLSTMandPh: (imageUrl: string, predictions: string[]) => void; // Adicionando a função onPredictionLSTMandPh
 }
 
-const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProphet, onGeneratePdf, onPredictionLSTMandPh }) => {
+const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProphet }) => {
   const [crypto, setCrypto] = useState('BTC-USD');
   const [loading, setLoading] = useState(false);
   const [showPdfButton, setShowPdfButton] = useState(false);
@@ -27,7 +26,7 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       onPrediction(imageUrl, predictions);
       setShowPdfButton(true);
       // batendo no endpoint para salvar o log
-      await axios.post('/api/logs', {
+      await axios.post('http://localhost:8000/api/logs', {
         crypto: 'BTC-USD',  // Exemplo, pode ser dinâmico
         model: 'LSTM',
         timestamp: new Date().toISOString()
@@ -47,7 +46,7 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       const { imageUrl, predictions } = response.data;
       onPredictionProphet(imageUrl, predictions);
       setShowPdfButton(true);
-      await axios.post('/api/logs', {
+      await axios.post('http://localhost:8000/api/logs', {
         crypto: 'BTC-USD',  // Exemplo, pode ser dinâmico
         model: 'Prophet',
         timestamp: new Date().toISOString()
@@ -69,7 +68,7 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       onPrediction(imageUrl, predictions);
       setLstmAndProphet(true);
       setShowPdfButton(true);
-      await axios.post('/api/logs', {
+      await axios.post('http://localhost:8000/api/logs', {
         crypto: 'BTC-USD',  // Exemplo, pode ser dinâmico
         model: 'LSTMandProphet',
         timestamp: new Date().toISOString()
@@ -130,7 +129,7 @@ const CryptoForm: React.FC<CryptoFormProps> = ({ onPrediction, onPredictionProph
       </button>
       {/* Botão para navegar até a página de logs */}
     <div className="mt-4">
-      <Link href="../app/logs.tsx">
+      <Link href="/logs">
          <button className="p-2 bg-gray-500 text-white rounded-md">Ver Histórico de Previsões</button>
       </Link>
     </div>

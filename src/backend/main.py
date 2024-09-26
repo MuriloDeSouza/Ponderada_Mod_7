@@ -41,9 +41,9 @@ class LogEntry(BaseModel):
 
 # Endpoint para salvar um novo log
 @app.post("/api/logs")
-async def save_log(logs: LogEntry):
-    logs.append(logs.dict())  # Salva o log no "banco de dados" (neste caso, na memória)
-    print("bati aqui na rota de post")
+async def save_log(log_entry: LogEntry):  # Mudei de "logs" para "log_entry"
+    logs.append(log_entry.dict())  # Salva o log no "banco de dados" (neste caso, na memória)
+    print(logs)
     return {"message": "Log salvo com sucesso"}
 
 # Endpoint para buscar o histórico de logs

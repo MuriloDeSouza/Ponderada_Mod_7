@@ -15,7 +15,7 @@ const LogsPage: React.FC = () => {
     // Faz a requisição para buscar o histórico de previsões
     const fetchLogs = async () => {
       try {
-        const response = await axios.get('/api/logs');
+        const response = await axios.get('http://localhost:8000/api/logs');
         setLogs(response.data);
       } catch (error) {
         console.error('Erro ao buscar logs:', error);
