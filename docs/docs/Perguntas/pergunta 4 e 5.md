@@ -54,7 +54,7 @@ Formata as previsões para fazer um "for" e mostra os dados em REAIS por que est
 
 &emsp; O dashboard de visualização serve para que nós consigamos escolher qual moeda nós queremos prever e clicar nos botões correspondentes escolhendo os modelos que a pessoa quer visualizar.
 
-![Template](./template.png)
+![Template](./img/template.png)
 
 &emsp; Podemos visualizar que temos 4 botões e um campo seletor (BTC, ETH e BNB)
 

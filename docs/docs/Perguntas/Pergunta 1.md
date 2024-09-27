@@ -6,6 +6,8 @@ sidebar_position: 1
 
 # Existiu uma etapa de exploração de dados para escolher os modelos e dados considerados;
 
+## Etapa de exploração dos dados
+
 &emsp; Nessa primeira isntância, fiz a parte de exploração dos dados e a escolha do modelo para seguir com o projeto.
 &emsp; Vale destacar que e mostrar que os dados de exploração EDA (Exploratory Data Analysis) foi feita e está disposta no caminho de pastas abaixo
 

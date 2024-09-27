@@ -6,6 +6,8 @@ sidebar_position: 6
 
 # A utilização do sistema é armazenada (logs de uso do sistema)
 
+## Entendimento da página de logs
+
 &emsp; Sim, o sistema foi projetado para registrar logs de uso, capturando informações sobre as interações dos usuários e o desempenho do modelo. Esses logs são úteis para monitorar a utilização do sistema, diagnosticar problemas e realizar auditorias.
 
 &emsp; Logs armazenados:

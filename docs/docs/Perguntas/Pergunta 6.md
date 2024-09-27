@@ -6,6 +6,8 @@ sidebar_position: 5
 
 # Existe um planejamento para que o modelo possa ser retreiando com novos dados;
 
+## Retreinamento dos dados
+
 &emsp; Sim, o sistema foi planejado para permitir o retreinamento contínuo do modelo com novos dados. O planejamento envolve a coleta de novos dados de criptoativos em intervalos regulares e a atualização do modelo LSTM para melhorar a acurácia à medida que novos padrões de mercado surgem.
 
 ## Processos de retreinamento:
